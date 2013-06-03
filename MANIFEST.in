@@ -1,0 +1,2 @@
+include *.py
+recursive-include custom_2to3_fixers *.py
