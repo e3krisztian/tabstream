@@ -19,16 +19,20 @@ class Reader(object):
         '''
         header_length = len(self.header)
         for row in self.reader:
+
+            # FIXME: padding stuff looks like a separate feature!
+
             # pad missing input with empty values
             row_length = len(row)
             if row_length == header_length:
                 pass
             elif row_length < header_length:
-                row += (unicode(),) * (header_length - row_length)
+                row += [unicode()] * (header_length - row_length)
             else:
                 raise ValueError(
                     'Invalid CSV - line {} has more values than the header'
                     .format(self.reader.line_num))
+
             yield row
 
     def select(self, columns):
@@ -36,6 +40,15 @@ class Reader(object):
 
         I am an iterator yielding records.
         '''
+        extract = self.extractor_for(columns)
+        return (extract(row) for row in self)
+
+    def extractor_for(self, columns):
+        '''I create a function that extracts the given columns from a row.
+
+        The returned function will return a tuple of column values
+        if there are more than one columns,
+        or the single value if columns has one element.
+        '''
         header_indices = [self.header.index(column) for column in columns]
-        extractor = operator.itemgetter(*header_indices)
-        return (extractor(row) for row in self)
+        return operator.itemgetter(*header_indices)
