@@ -9,11 +9,11 @@ PY3 = not PY2
 
 
 setup(
-    name='csvwh',
+    name='csvx',
     version='0.1.0',
-    description='CSV with header - easy reading of CSV streams',
+    description='CSV eXtensions - easy reading of CSV streams with header',
     author='Krisztián Fekete',
-    author_email='fkr972@gmail.com',
+    author_email='fekete.krisztyan@gmail.com',
 
     license='MIT License',
 
@@ -26,8 +26,8 @@ setup(
         'Topic :: Software Development :: Libraries',
         ],
 
-    py_modules=['csvwh', 'test_csvwh'],
-    test_suite='test_csvwh',
+    py_modules=['csvx', 'test_csvx'],
+    test_suite='test_csvx',
 
     install_requires=['unicodecsv'] if PY2 else [],
     use_2to3=PY3,
