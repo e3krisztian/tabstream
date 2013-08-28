@@ -1,5 +1,4 @@
 import operator
-import unicodecsv
 import io
 
 
@@ -42,6 +41,7 @@ def selectx(csv_external, column_names):
 
     I am an iterator yielding records.
     '''
+    import unicodecsv
     with csv_external.readable_stream() as stream:
         reader = unicodecsv.reader(io.TextIOWrapper(stream))
         for row in select(reader, column_names):

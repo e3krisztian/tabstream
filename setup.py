@@ -2,15 +2,17 @@
 
 from setuptools import setup
 
-
 import sys
 PY2 = sys.version_info[0] < 3
 PY3 = not PY2
 
 
+PY2_UNICODECSV = ['unicodecsv'] if PY2 else []
+
+
 setup(
     name='csvx',
-    version='0.1.0',
+    version=':versiontools:csvx_version:',
     description='CSV eXtensions - easy reading of CSV streams with header',
     author='Krisztián Fekete',
     author_email='fekete.krisztyan@gmail.com',
@@ -26,11 +28,12 @@ setup(
         'Topic :: Software Development :: Libraries',
         ],
 
-    py_modules=['csvx', 'test_csvx'],
+    py_modules=['csvx', 'csvx_version', 'test_csvx'],
     test_suite='test_csvx',
     tests_require=['externals'],
 
-    install_requires=['unicodecsv'] if PY2 else [],
+    setup_requires=['versiontools >= 1.8'],
+    install_requires=PY2_UNICODECSV,
     dependency_links=[
         'https://github.com/krisztianfekete/externals/tarball/master#egg=externals-0.0dev'],
 
