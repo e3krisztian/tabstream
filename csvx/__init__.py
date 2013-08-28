@@ -2,6 +2,9 @@ import operator
 import io
 
 
+__version__ = (0, 1, 0, 'dev', 0)
+
+
 def fix_missing_columns(seq_stream):
     iseq_stream = iter(seq_stream)
     header = iseq_stream.next()

@@ -12,7 +12,7 @@ PY2_UNICODECSV = ['unicodecsv'] if PY2 else []
 
 setup(
     name='csvx',
-    version=':versiontools:csvx_version:',
+    version=':versiontools:csvx:',
     description='CSV eXtensions - easy reading of CSV streams with header',
     author='Krisztián Fekete',
     author_email='fekete.krisztyan@gmail.com',
@@ -28,9 +28,7 @@ setup(
         'Topic :: Software Development :: Libraries',
         ],
 
-    py_modules=['csvx', 'csvx_version', 'test_csvx'],
-    test_suite='test_csvx',
-    tests_require=['externals'],
+    packages=['csvx'],
 
     setup_requires=['versiontools >= 1.8'],
     install_requires=PY2_UNICODECSV,
