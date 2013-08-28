@@ -1,135 +1,128 @@
 import unittest
-import io
-import textwrap
+
 import csvx as m
 
-
-def stringio(text):
-    return io.StringIO(textwrap.dedent(text))
-
-
-def h1h2v1v2():
-    '''a well known file-like object
-    '''
-    return stringio(u'''\
-        header1,header2
-        value1,value2
-        ''')
+import textwrap
+from externals.fake import Fake as MemExternal
 
 
-def h1h2v1v2v3v4():
-    '''a well known file-like object
-    '''
-    return stringio(u'''\
-        header1,header2
-        value1,value2
-        value3,value4
-        ''')
+def records_from_text(text):
+    return [
+        tuple(line.strip().split(u','))
+        for line in text.splitlines()
+        ]
 
 
-class Test_Reader(unittest.TestCase):
+class Test_records_from_text(unittest.TestCase):
 
-    def test_header(self):
-        reader = m.Reader(h1h2v1v2())
-
-        self.assertListEqual(
-            [u'header1', u'header2'],
-            reader.header)
-
-    def test_iterate_over_input(self):
-        reader = m.Reader(h1h2v1v2v3v4())
-
+    def test(self):
         self.assertListEqual(
             [
-                [u'value1', u'value2'],
-                [u'value3', u'value4']],
-            list(reader))
+                (u'header1', u'header2'),
+                (u'value1', u'')],
+            records_from_text(u'''\
+                header1,header2
+                value1, '''))
 
-    def test_select1(self):
-        reader = m.Reader(h1h2v1v2())
 
-        for v2, v1, v22 in reader.select([u'header2', u'header1', u'header2']):
-            # executed only once - as the input has only one data row
-            self.assertEqual(u'value2', v2)
-            self.assertEqual(u'value1', v1)
-            self.assertEqual(u'value2', v22)
+class Test_fix_missing_columns(unittest.TestCase):
 
-    def test_select2(self):
-        reader = m.Reader(h1h2v1v2v3v4())
-
+    def test_well_formed_input_remains_as_is(self):
         self.assertListEqual(
-            [
-                u'value2',
-                u'value4'],
-            list(reader.select([u'header2'])))
+            records_from_text(u'''\
+                header1,header2
+                value1,value2 '''),
+            list(
+                m.fix_missing_columns(
+                    records_from_text(u'''\
+                        header1,header2
+                        value1,value2 '''))))
 
-    def test_extract_for1(self):
-        reader = m.Reader(h1h2v1v2())
-        get_value_under_header2 = reader.extractor_for([u'header2'])
-
-        for row in reader:
-            # executed only once - as the input has only one data row
-            self.assertListEqual([u'value1', u'value2'], row)
-            self.assertEqual(u'value2', get_value_under_header2(row))
-
-    def test_extract_for2(self):
-        reader = m.Reader(h1h2v1v2())
-        get_reversed_values = reader.extractor_for([u'header2', u'header1'])
-
-        for row in reader:
-            # executed only once - as the input has only one data row
-            self.assertListEqual(
-                [u'value1', u'value2'],
-                row)
-
-            self.assertSequenceEqual(
-                [u'value2', u'value1'],
-                get_reversed_values(row))
-
-    def test_short_input_lines_are_OK(self):
-        file = stringio(u'''\
-            header1,header2
-            value1
-            value11,value2
-            ''')
-
+    def test_short_records_are_padded_with_empty_strings(self):
         self.assertListEqual(
-            [
-                [u'value1', u''],
-                [u'value11', u'value2']],
-            list(m.Reader(file)))
+            records_from_text(u'''\
+                header1,header2
+                value1, '''),
+            list(
+                m.fix_missing_columns(
+                    records_from_text(u'''\
+                        header1,header2
+                        value1 '''))))
 
-    def test_too_many_values_in_record_is_an_error(self):
-        file = stringio(u'''\
-            header1,header2
-            value1,value2,value3
-            ''')
-
+    def test_longer_than_header_row_raise_ValueError(self):
         with self.assertRaises(ValueError):
-            iter(m.Reader(file)).next()
+            list(
+                m.fix_missing_columns(
+                    records_from_text(u'''\
+                        header1,header2
+                        value1,value2,value3
+                        ''')))
 
-    def test_select_columns_input_can_be_in_different_order(self):
+
+class Test_select(unittest.TestCase):
+
+    def assert_selects(self, result_csv, input_csv, columns):
         self.assertListEqual(
-            [(u'value2', u'value1')],
-            list(m.Reader(h1h2v1v2()).select([u'header2', u'header1'])))
+            records_from_text(result_csv),
+            list(
+                m.select(
+                    records_from_text(input_csv),
+                    columns.split(u','))))
 
-    def test_extractor_for_multiple_columns(self):
-        reader = m.Reader(h1h2v1v2())
-        extract = reader.extractor_for(u'header1 header2 header1'.split())
-        row = list(reader)[0]
+    def test_select_one_column(self):
+        input_csv = u'''a,b,c
+            a,1,c
+            a,2,d
+            x,3,x'''
+        self.assertListEqual(
+            [u'1', u'2', u'3'],
+            list(
+                m.select(
+                    records_from_text(input_csv),
+                    [u'b'])))
 
-        self.assertTupleEqual(
-            tuple(u'header1 header2 header1'.split()),
-            extract(reader.header))
+    def test_select_no_columns_is_error(self):
+        input_csv = u'''a,b
+                a,1
+                a,2
+                x,3'''
 
-        self.assertTupleEqual(
-            tuple(u'value1 value2 value1'.split()),
-            extract(row))
+        with self.assertRaises(Exception):
+            m.select(records_from_text(input_csv), [])
 
-    def test_extractor_for_single_column(self):
-        reader = m.Reader(h1h2v1v2())
-        extract = reader.extractor_for(u'header2'.split())
-        row = list(reader)[0]
+    def test_select_columns_in_reverse_order(self):
+        self.assert_selects(
+            result_csv=u'''1,a
+                2,a
+                3,x''',
+            input_csv=u'''a,b,c
+                a,1,c
+                a,2,d
+                x,3,x''',
+            columns=u'b,a')
 
-        self.assertEqual(u'header2', extract(reader.header))
-        self.assertEqual(u'value2', extract(row))
+    def test_select_a_column_multiple_times(self):
+        self.assert_selects(
+            result_csv=u'''1,1
+                2,2
+                3,3''',
+            input_csv='''a,b,c
+                a,1,c
+                a,2,d
+                x,3,x''',
+            columns=u'b,b')
+
+
+class Test_selectx(unittest.TestCase):
+
+    def test(self):
+        csv_external = MemExternal()
+        csv_external.content = textwrap.dedent(
+            u'''\
+            a,b,c
+            a,1,c
+            a,2,d
+            x,3,x''').encode('utf-8')
+        self.assertListEqual(
+            [u'1', u'2', u'3'],
+            list(m.selectx(csv_external, [u'b'])))

@@ -28,8 +28,12 @@ setup(
 
     py_modules=['csvx', 'test_csvx'],
     test_suite='test_csvx',
+    tests_require=['externals'],
 
     install_requires=['unicodecsv'] if PY2 else [],
+    dependency_links=[
+        'https://github.com/krisztianfekete/externals/tarball/master#egg=externals-0.0dev'],
+
     use_2to3=PY3,
     use_2to3_fixers=['custom_2to3_fixers'],
     )
