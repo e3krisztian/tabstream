@@ -49,3 +49,52 @@ def selectx(csv_external, column_names):
         reader = unicodecsv.reader(io.TextIOWrapper(stream))
         for row in select(reader, column_names):
             yield row
+
+
+import functools
+# import operator
+import inspect
+
+
+def make_field_adder(output_field, function, input_fields):
+
+    def _fields_extractor(header):
+        if len(input_fields) == 0:
+            def get_fields(__):
+                return ()
+        elif len(input_fields) == 1:
+            _get_fields = operator.itemgetter(header.index(input_fields[0]))
+
+            def get_fields(row):
+                return (_get_fields(row),)
+        else:
+            get_fields = operator.itemgetter(
+                *[header.index(field) for field in input_fields])
+        return get_fields
+
+    def _filter(stream):
+        header = stream.next()
+        # header
+        yield tuple(header) + (output_field,)
+
+        get_fields = _fields_extractor(header)
+
+        # data
+        for row in stream:
+            yield tuple(row) + (function(*get_fields(row)),)
+
+    @functools.wraps(function)
+    def filter(stream_with_header):
+        return _filter(iter(stream_with_header))
+
+    return filter
+
+
+def add_field(function):
+    assert function.__name__.startswith('add_')
+    output_field = function.__name__[len('add_'):]
+
+    argspec = inspect.getargspec(function)
+    input_fields = argspec.args
+
+    return make_field_adder(output_field, function, input_fields)

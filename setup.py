@@ -33,7 +33,8 @@ setup(
     setup_requires=['versiontools >= 1.8'],
     install_requires=PY2_UNICODECSV,
     dependency_links=[
-        'https://github.com/krisztianfekete/externals/tarball/master#egg=externals-0.0dev'],
+        ('https://github.com/krisztianfekete/externals/tarball/master'
+         '#egg=externals-0.0dev')],
 
     use_2to3=PY3,
     use_2to3_fixers=['custom_2to3_fixers'],

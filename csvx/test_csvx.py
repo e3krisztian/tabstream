@@ -126,3 +126,120 @@ class Test_selectx(unittest.TestCase):
         self.assertListEqual(
             [u'1', u'2', u'3'],
             list(m.selectx(csv_external, [u'b'])))
+
+
+class Test_make_field_adder(unittest.TestCase):
+
+    def test_no_parameters(self):
+        def constant():
+            return 'c'
+
+        filter = m.make_field_adder('const', constant, [])
+        self.assertListEqual(
+            [
+                ('a', 'b', 'const'),
+                ('a', 'b', 'c'),
+                (1.1, 3, 'c')
+            ],
+            list(filter(
+                [
+                    ('a', 'b'),
+                    ('a', 'b'),
+                    (1.1, 3)
+                ])))
+
+    def test_single_parameter(self):
+        def dup(input_field):
+            return input_field + input_field
+        filter = m.make_field_adder('2a', dup, ['a'])
+        self.assertListEqual(
+            [
+                ('a', 'b', '2a'),
+                ('a', 'b', 'aa'),
+                (1.1, 3, 2.2)
+            ],
+            list(filter(
+                [
+                    ('a', 'b'),
+                    ('a', 'b'),
+                    (1.1, 3)
+                ])))
+
+    def test_two_parameters(self):
+        def plus(input_field1, input_field2):
+            return input_field1 + input_field2
+        filter = m.make_field_adder('b+a', plus, ['b', 'a'])
+        self.assertListEqual(
+            [
+                ('a', 'b', 'b+a'),
+                ('a', 'b', 'ba'),
+                (1.1, 3, 4.1)
+            ],
+            list(filter(
+                [
+                    ('a', 'b'),
+                    ('a', 'b'),
+                    (1.1, 3)
+                ])))
+
+
+class Test_add_field(unittest.TestCase):
+
+    def test_no_parameters(self):
+        @m.add_field
+        def add_const():
+            return 'c'
+
+        self.assertListEqual(
+            [
+                ('a', 'b', 'const'),
+                ('a', 'b', 'c'),
+                (1.1, 3, 'c')
+            ],
+            list(add_const(
+                [
+                    ('a', 'b'),
+                    ('a', 'b'),
+                    (1.1, 3)
+                ])))
+
+    def test_single_parameter(self):
+        @m.add_field
+        def add_2a(a):
+            return a + a
+
+        self.assertListEqual(
+            [
+                ('a', 'b', '2a'),
+                ('a', 'b', 'aa'),
+                (1.1, 3, 2.2)
+            ],
+            list(add_2a(
+                [
+                    ('a', 'b'),
+                    ('a', 'b'),
+                    (1.1, 3)
+                ])))
+
+    def test_two_parameters(self):
+        @m.add_field
+        def add_x(b, a):
+            return b + a
+
+        self.assertListEqual(
+            [
+                ('a', 'b', 'x'),
+                ('a', 'b', 'ba'),
+                (1.1, 3, 4.1)
+            ],
+            list(add_x(
+                [
+                    ('a', 'b'),
+                    ('a', 'b'),
+                    (1.1, 3)
+                ])))
+
+# # future syntax sugar:
+# @csvproc.add_field
+# def add_output_field(input_field1, input_field2):
+#     return input_field1 + input_field2
