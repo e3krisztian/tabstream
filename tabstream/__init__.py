@@ -6,12 +6,14 @@ import inspect
 __version__ = (0, 1, 0, 'dev', 0)
 
 
-def stream_filter(function):
-    @functools.wraps(function)
+def stream_filter(filter_function):
+    '''I make it safe and boilerplate-less to work with streams with headers.
+    '''
+    @functools.wraps(filter_function)
     def stream_filter(stream):
         istream = iter(stream)
         header = istream.next()
-        return function(header, istream)
+        return filter_function(header, istream)
     return stream_filter
 
 
@@ -76,6 +78,10 @@ def _fields_extractor_by_names(header, fields):
     return _fields_extractor_for(indices)
 
 
+# TODO cut(fields) - like select
+# TODO extract_map(id_field, existing_map, fields)
+
+
 def make_field_adder(output_field, function, input_fields):
     '''I create a stream filter that adds a new field to the stream.
 
@@ -94,6 +100,12 @@ def make_field_adder(output_field, function, input_fields):
     return filter
 
 
+def _get_input_fields(function):
+    '''I perform the magic of extracting function argument names'''
+    argspec = inspect.getargspec(function)
+    return argspec.args
+
+
 def field_adder(function):
     '''I am a function decorator, I make a stream filter from the function
     specified by its signature to add a new field to the stream.
@@ -104,9 +116,7 @@ def field_adder(function):
     assert function.__name__.startswith('add_')
     output_field = function.__name__[len('add_'):]
 
-    argspec = inspect.getargspec(function)
-    input_fields = argspec.args
-
+    input_fields = _get_input_fields(function)
     return make_field_adder(output_field, function, input_fields)
 
 
@@ -185,6 +195,43 @@ def add_row_number(field):
             yield (index + 1,) + tuple(row)
 
     return add_row_number
+
+
+def calculate(**labels_to_functions):
+    '''I am creating a filter, that calculates values with the given functions
+    applied over the row content.
+
+    I am probably the most important function in this module.
+    '''
+
+    def _make_calculator(function, header):
+        input_fields = _get_input_fields(function)
+        get_fields = _fields_extractor_by_names(header, input_fields)
+
+        @functools.wraps(function)
+        def calculator(row):
+            return function(*get_fields(row))
+
+        return calculator
+
+    def _get_calculator(label, header):
+        if label in labels_to_functions:
+            return _make_calculator(labels_to_functions[label], header)
+
+        return operator.itemgetter(header.index(label))
+
+    def _get_calculators(header):
+        return [_get_calculator(label, header) for label in header]
+
+    @stream_filter
+    def calculate(header, stream):
+        yield header
+
+        calculators = _get_calculators(header)
+        for row in stream:
+            yield tuple(calculate(row) for calculate in calculators)
+
+    return calculate
 
 
 def pipe(*filters):

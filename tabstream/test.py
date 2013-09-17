@@ -329,6 +329,29 @@ class Test_add_row_numbers(unittest.TestCase):
                 ])))
 
 
+class Test_calculate(unittest.TestCase):
+
+    def test(self):
+        def a_plus_b(a, b):
+            return a + b
+
+        def a_plus_a(a):
+            return a + a
+        transform = m.calculate(sum=a_plus_b, a=a_plus_a)
+
+        self.assertListEqual(
+            [
+                ('sum', 'a', 'b'),
+                (3, 2, 2),
+                ('aabb', 'aaaa', 'bb')
+            ],
+            list(transform([
+                ('sum', 'a', 'b'),
+                (9, 1, 2),
+                (11, 'aa', 'bb'),
+                ])))
+
+
 class Test_pipe(unittest.TestCase):
 
     def test_order_of_transformations(self):
