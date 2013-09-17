@@ -9,14 +9,16 @@ __version__ = (0, 1, 0, 'dev', 0)
 def stream_filter(function):
     @functools.wraps(function)
     def stream_filter(stream):
-        return function(iter(stream))
+        istream = iter(stream)
+        header = istream.next()
+        return function(header, istream)
     return stream_filter
 
 
 @stream_filter
-def pad(stream):
+def pad(header, stream):
     '''I am a filter, I pad short rows to match header length'''
-    header = stream.next()
+
     yield header
 
     header_length = len(header)
@@ -82,14 +84,10 @@ def make_field_adder(output_field, function, input_fields):
     '''
     @stream_filter
     @functools.wraps(function)
-    def filter(stream):
-        header = stream.next()
-        # header
+    def filter(header, stream):
         yield tuple(header) + (output_field,)
 
         get_fields = _fields_extractor_by_names(header, input_fields)
-
-        # data
         for row in stream:
             yield tuple(row) + (function(*get_fields(row)),)
 
@@ -116,8 +114,7 @@ def delete_fields(*fields_to_delete):
     '''I make a filter on tabular stream that removes fields from the stream
     '''
     @stream_filter
-    def delete_fields(stream):
-        header = stream.next()
+    def delete_fields(header, stream):
         output_header = tuple(
             field for field in header if field not in fields_to_delete)
 
@@ -157,8 +154,7 @@ def rename(new_to_old_dict=None, **new_to_old_kw):
         return sorted(label_index_map, key=sort_key)
 
     @stream_filter
-    def rename(stream):
-        header = stream.next()
+    def rename(header, stream):
         out_order = _get_sorted_label_index_map(header)
 
         yield tuple(label for (label, __) in out_order)
