@@ -162,10 +162,10 @@ class Test_make_field_adder(unittest.TestCase):
                 ])))
 
 
-class Test_add_field(unittest.TestCase):
+class Test_field_adder(unittest.TestCase):
 
     def test_no_parameters(self):
-        @m.add_field
+        @m.field_adder
         def add_const():
             return 'c'
 
@@ -182,7 +182,7 @@ class Test_add_field(unittest.TestCase):
                 ])))
 
     def test_single_parameter(self):
-        @m.add_field
+        @m.field_adder
         def add_2a(a):
             return a + a
 
@@ -199,7 +199,7 @@ class Test_add_field(unittest.TestCase):
                 ])))
 
     def test_two_parameters(self):
-        @m.add_field
+        @m.field_adder
         def add_x(b, a):
             return b + a
 

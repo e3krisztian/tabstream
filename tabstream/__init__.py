@@ -94,7 +94,7 @@ def make_field_adder(output_field, function, input_fields):
     return filter
 
 
-def add_field(function):
+def field_adder(function):
     '''I am a function decorator, I make a stream filter from the function
     specified by its signature to add a new field to the stream.
 
