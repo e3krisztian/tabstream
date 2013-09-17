@@ -141,11 +141,10 @@ class Test_make_field_adder(unittest.TestCase):
                 ('a', 'b', 'c'),
                 (1.1, 3, 'c')
             ],
-            list(filter(
-                [
-                    ('a', 'b'),
-                    ('a', 'b'),
-                    (1.1, 3)
+            list(filter([
+                ('a', 'b'),
+                ('a', 'b'),
+                (1.1, 3)
                 ])))
 
     def test_single_parameter(self):
@@ -158,11 +157,10 @@ class Test_make_field_adder(unittest.TestCase):
                 ('a', 'b', 'aa'),
                 (1.1, 3, 2.2)
             ],
-            list(filter(
-                [
-                    ('a', 'b'),
-                    ('a', 'b'),
-                    (1.1, 3)
+            list(filter([
+                ('a', 'b'),
+                ('a', 'b'),
+                (1.1, 3)
                 ])))
 
     def test_two_parameters(self):
@@ -175,11 +173,10 @@ class Test_make_field_adder(unittest.TestCase):
                 ('a', 'b', 'ba'),
                 (1.1, 3, 4.1)
             ],
-            list(filter(
-                [
-                    ('a', 'b'),
-                    ('a', 'b'),
-                    (1.1, 3)
+            list(filter([
+                ('a', 'b'),
+                ('a', 'b'),
+                (1.1, 3)
                 ])))
 
 
@@ -196,11 +193,10 @@ class Test_add_field(unittest.TestCase):
                 ('a', 'b', 'c'),
                 (1.1, 3, 'c')
             ],
-            list(add_const(
-                [
-                    ('a', 'b'),
-                    ('a', 'b'),
-                    (1.1, 3)
+            list(add_const([
+                ('a', 'b'),
+                ('a', 'b'),
+                (1.1, 3)
                 ])))
 
     def test_single_parameter(self):
@@ -214,11 +210,10 @@ class Test_add_field(unittest.TestCase):
                 ('a', 'b', 'aa'),
                 (1.1, 3, 2.2)
             ],
-            list(add_2a(
-                [
-                    ('a', 'b'),
-                    ('a', 'b'),
-                    (1.1, 3)
+            list(add_2a([
+                ('a', 'b'),
+                ('a', 'b'),
+                (1.1, 3)
                 ])))
 
     def test_two_parameters(self):
@@ -232,14 +227,35 @@ class Test_add_field(unittest.TestCase):
                 ('a', 'b', 'ba'),
                 (1.1, 3, 4.1)
             ],
-            list(add_x(
-                [
-                    ('a', 'b'),
-                    ('a', 'b'),
-                    (1.1, 3)
+            list(add_x([
+                ('a', 'b'),
+                ('a', 'b'),
+                (1.1, 3)
                 ])))
 
-# # future syntax sugar:
-# @csvproc.add_field
-# def add_output_field(input_field1, input_field2):
-#     return input_field1 + input_field2
+
+class Test_delete_fields(unittest.TestCase):
+
+    def test(self):
+        delete_a_c = m.delete_fields('a', 'c')
+        self.assertListEqual(
+            [
+                ('b', 'd'),
+                (2, 4)
+            ],
+            list(delete_a_c([
+                ('a', 'b', 'c', 'd'),
+                (1, 2, 3, 4)
+                ])))
+
+    def test_delete_non_existing(self):
+        delete_a_c = m.delete_fields('a', 'c')
+        self.assertListEqual(
+            [
+                ('b',),
+                (2,)
+            ],
+            list(delete_a_c([
+                ('a', 'b'),
+                (1, 2)
+                ])))
