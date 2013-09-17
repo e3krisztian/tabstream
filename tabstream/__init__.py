@@ -121,3 +121,13 @@ def delete_fields(*fields_to_delete):
             yield get_fields(row)
 
     return delete_fields
+
+
+def pipe(*filters):
+    '''I compose filters
+    '''
+    def pipe(stream):
+        for filter in filters:
+            stream = filter(stream)
+        return stream
+    return pipe

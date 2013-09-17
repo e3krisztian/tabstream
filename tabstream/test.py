@@ -241,3 +241,19 @@ class Test_delete_fields(unittest.TestCase):
                 ('a', 'b'),
                 (1, 2)
                 ])))
+
+
+class Test_pipe(unittest.TestCase):
+
+    def test_order_of_transformations(self):
+        def add_a(stream):
+            return (val + 'a' for val in stream)
+
+        def add_b(stream):
+            return (val + 'b' for val in stream)
+
+        transform = m.pipe(add_a, add_b)
+
+        self.assertListEqual(
+            ['1ab', '2ab'],
+            list(transform(['1', '2'])))
