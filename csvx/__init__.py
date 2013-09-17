@@ -1,11 +1,12 @@
 import operator
-import io
+import functools
+import inspect
 
 
 __version__ = (0, 1, 0, 'dev', 0)
 
 
-def fix_missing_columns(seq_stream):
+def pad(seq_stream):
     iseq_stream = iter(seq_stream)
     header = iseq_stream.next()
     yield header
@@ -36,24 +37,6 @@ def select(seq_stream, column_names):
     extract = operator.itemgetter(*header_indices)
 
     return (extract(row) for row in iseq_stream)
-
-
-def selectx(csv_external, column_names):
-    '''I process a CSV external with a header,
-    but return only the requested columns.
-
-    I am an iterator yielding records.
-    '''
-    import unicodecsv
-    with csv_external.readable_stream() as stream:
-        reader = unicodecsv.reader(io.TextIOWrapper(stream))
-        for row in select(reader, column_names):
-            yield row
-
-
-import functools
-# import operator
-import inspect
 
 
 def _fields_extractor(header, fields):

@@ -2,9 +2,6 @@ import unittest
 
 import csvx as m
 
-import textwrap
-from externals.fake import Fake as MemExternal
-
 
 def records_from_text(text):
     return [
@@ -25,7 +22,7 @@ class Test_records_from_text(unittest.TestCase):
                 value1, '''))
 
 
-class Test_fix_missing_columns(unittest.TestCase):
+class Test_pad(unittest.TestCase):
 
     def test_well_formed_input_remains_as_is(self):
         self.assertListEqual(
@@ -33,7 +30,7 @@ class Test_fix_missing_columns(unittest.TestCase):
                 header1,header2
                 value1,value2 '''),
             list(
-                m.fix_missing_columns(
+                m.pad(
                     records_from_text(u'''\
                         header1,header2
                         value1,value2 '''))))
@@ -44,7 +41,7 @@ class Test_fix_missing_columns(unittest.TestCase):
                 header1,header2
                 value1, '''),
             list(
-                m.fix_missing_columns(
+                m.pad(
                     records_from_text(u'''\
                         header1,header2
                         value1 '''))))
@@ -52,7 +49,7 @@ class Test_fix_missing_columns(unittest.TestCase):
     def test_longer_than_header_row_raise_ValueError(self):
         with self.assertRaises(ValueError):
             list(
-                m.fix_missing_columns(
+                m.pad(
                     records_from_text(u'''\
                         header1,header2
                         value1,value2,value3
@@ -111,21 +108,6 @@ class Test_select(unittest.TestCase):
                 a,2,d
                 x,3,x''',
             columns=u'b,b')
-
-
-class Test_selectx(unittest.TestCase):
-
-    def test(self):
-        csv_external = MemExternal()
-        csv_external.content = textwrap.dedent(
-            u'''\
-            a,b,c
-            a,1,c
-            a,2,d
-            x,3,x''').encode('utf-8')
-        self.assertListEqual(
-            [u'1', u'2', u'3'],
-            list(m.selectx(csv_external, [u'b'])))
 
 
 class Test_make_field_adder(unittest.TestCase):
