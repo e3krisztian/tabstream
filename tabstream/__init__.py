@@ -128,9 +128,15 @@ def delete_fields(*fields_to_delete):
 
 
 def rename(new_to_old_dict=None, **new_to_old_kw):
+    '''I create a filter that relabels columns.
+
+    Actually there is more, as it is possible to
+    - duplicate columns
+    - overwrite other rows
+    '''
     new_to_old = new_to_old_dict or new_to_old_kw
 
-    def _get_label_index_map(header):
+    def _get_label_index_seq(header):
         old_header = {label: i for i, label in enumerate(header)}
         new_header = {}
         for (new, old) in new_to_old.iteritems():
@@ -144,24 +150,25 @@ def rename(new_to_old_dict=None, **new_to_old_kw):
         old_header.update(new_header)
         return old_header.items()
 
-    def _get_sorted_label_index_map(header):
-        label_index_map = _get_label_index_map(header)
+    def _get_sorted_label_index_seq(header):
+        label_index_seq = _get_label_index_seq(header)
 
         def sort_key(label_index):
             label, index = label_index
             return (index, label not in header, label)
 
-        return sorted(label_index_map, key=sort_key)
+        return sorted(label_index_seq, key=sort_key)
 
     @stream_filter
     def rename(header, stream):
-        out_order = _get_sorted_label_index_map(header)
+        label_index_seq = _get_sorted_label_index_seq(header)
 
-        yield tuple(label for (label, __) in out_order)
+        output_header = tuple(label for (label, __) in label_index_seq)
+        output_indices = [index for (__, index) in label_index_seq]
 
-        output_indices = [index for (__, index) in out_order]
+        yield output_header
+
         get_fields = _fields_extractor_for(output_indices)
-
         for row in stream:
             yield get_fields(row)
 
