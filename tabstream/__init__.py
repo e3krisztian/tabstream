@@ -191,7 +191,7 @@ def pipe(*filters):
     '''I compose filters
     '''
     def pipe(stream):
-        for filter in filters:
-            stream = filter(stream)
+        for stream_filter in filters:
+            stream = stream_filter(stream)
         return stream
     return pipe
