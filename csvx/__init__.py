@@ -6,13 +6,21 @@ import inspect
 __version__ = (0, 1, 0, 'dev', 0)
 
 
-def pad(seq_stream):
-    iseq_stream = iter(seq_stream)
-    header = iseq_stream.next()
+def stream_filter(function):
+    @functools.wraps(function)
+    def stream_filter(stream):
+        return function(iter(stream))
+    return stream_filter
+
+
+@stream_filter
+def pad(stream):
+    '''I am a filter, I pad short rows to match header length'''
+    header = stream.next()
     yield header
 
     header_length = len(header)
-    for row in iseq_stream:
+    for row in stream:
         # pad missing input with empty values
         row_length = len(row)
         if row_length == header_length:
@@ -25,18 +33,22 @@ def pad(seq_stream):
                 .format(row))
 
 
-def select(seq_stream, column_names):
-    '''I process a CSV record stream with a header,
-    but return only the requested columns.
+def select(stream, column_names):
+    '''I process a record stream with a header row,
+    returning only the requested columns.
 
     I am an iterator yielding records.
-    '''
-    iseq_stream = iter(seq_stream)
-    header = iseq_stream.next()
-    header_indices = [header.index(column) for column in column_names]
-    extract = operator.itemgetter(*header_indices)
 
-    return (extract(row) for row in iseq_stream)
+    NOTE: I am not a filter, use me in application for loops.
+    '''
+    def _select(stream, column_names):
+        header = stream.next()
+        header_indices = [header.index(column) for column in column_names]
+        extract = operator.itemgetter(*header_indices)
+
+        return (extract(row) for row in stream)
+
+    return _select(iter(stream), column_names)
 
 
 def _fields_extractor(header, fields):
@@ -61,7 +73,9 @@ def make_field_adder(output_field, function, input_fields):
     The new field will have the name `output_field` and its values
     will be calculated by `function(*input_fields)`
     '''
-    def _filter(stream):
+    @stream_filter
+    @functools.wraps(function)
+    def filter(stream):
         header = stream.next()
         # header
         yield tuple(header) + (output_field,)
@@ -71,10 +85,6 @@ def make_field_adder(output_field, function, input_fields):
         # data
         for row in stream:
             yield tuple(row) + (function(*get_fields(row)),)
-
-    @functools.wraps(function)
-    def filter(stream_with_header):
-        return _filter(iter(stream_with_header))
 
     return filter
 
@@ -98,7 +108,8 @@ def add_field(function):
 def delete_fields(*fields_to_delete):
     '''I make a filter on tabular stream that removes fields from the stream
     '''
-    def _delete_fields(stream):
+    @stream_filter
+    def delete_fields(stream):
         header = stream.next()
         output_header = tuple(
             field for field in header if field not in fields_to_delete)
@@ -108,8 +119,5 @@ def delete_fields(*fields_to_delete):
         yield get_fields(header)
         for row in stream:
             yield get_fields(row)
-
-    def delete_fields(stream):
-        return _delete_fields(iter(stream))
 
     return delete_fields
