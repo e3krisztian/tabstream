@@ -175,6 +175,18 @@ def rename(new_to_old_dict=None, **new_to_old_kw):
     return rename
 
 
+def add_row_number(field):
+    '''I am creating a filter that will add row numbers to the stream'''
+    @stream_filter
+    def add_row_number(header, stream):
+        yield (field,) + tuple(header)
+
+        for index, row in enumerate(stream):
+            yield (index + 1,) + tuple(row)
+
+    return add_row_number
+
+
 def pipe(*filters):
     '''I compose filters
     '''

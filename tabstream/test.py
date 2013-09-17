@@ -312,6 +312,23 @@ class Test_rename(unittest.TestCase):
                 ])))
 
 
+class Test_add_row_numbers(unittest.TestCase):
+
+    def test(self):
+        transform = m.add_row_number('row#')
+        self.assertListEqual(
+            [
+                ('row#', 'a', 'b'),
+                (1, 1, 2),
+                (2, 'aa', 'bb')
+            ],
+            list(transform([
+                ('a', 'b'),
+                (1, 2),
+                ('aa', 'bb'),
+                ])))
+
+
 class Test_pipe(unittest.TestCase):
 
     def test_order_of_transformations(self):
