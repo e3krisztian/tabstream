@@ -7,9 +7,10 @@ PY3 = sys.version_info.major == 3
 
 
 setup(
-    name='csvx',
-    version=':versiontools:csvx:',
-    description='CSV eXtensions - easy reading of CSV streams with header',
+    name='tabstream',
+    version=':versiontools:tabstream:',
+    description=(
+        'Library to work with tabular streams with headers (CSV files)'),
     author='Krisztián Fekete',
     author_email='fekete.krisztyan@gmail.com',
 
@@ -24,7 +25,7 @@ setup(
         'Topic :: Software Development :: Libraries',
         ],
 
-    packages=['csvx'],
+    packages=['tabstream'],
 
     setup_requires=['versiontools >= 1.8'],
 

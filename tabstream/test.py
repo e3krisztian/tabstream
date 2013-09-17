@@ -1,6 +1,6 @@
 import unittest
 
-import csvx as m
+import tabstream as m
 
 
 def records_from_text(text):
