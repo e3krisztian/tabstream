@@ -51,20 +51,27 @@ def select(stream, column_names):
     return _select(iter(stream), column_names)
 
 
-def _fields_extractor(header, fields):
-    if len(fields) == 0:
+def _fields_extractor_for(indices):
+    if len(indices) == 0:
+        # special case: no column selected
         def get_fields(__):
             return ()
-    elif len(fields) == 1:
-        _get_fields = operator.itemgetter(header.index(fields[0]))
+        return get_fields
+
+    if len(indices) == 1:
+        # special case: one column selected
+        _get_fields = operator.itemgetter(indices[0])
 
         def get_fields(row):
             return (_get_fields(row),)
-    else:
-        get_fields = operator.itemgetter(
-            *[header.index(field) for field in fields])
+        return get_fields
 
-    return get_fields
+    return operator.itemgetter(*indices)
+
+
+def _fields_extractor_by_names(header, fields):
+    indices = [header.index(field) for field in fields]
+    return _fields_extractor_for(indices)
 
 
 def make_field_adder(output_field, function, input_fields):
@@ -80,7 +87,7 @@ def make_field_adder(output_field, function, input_fields):
         # header
         yield tuple(header) + (output_field,)
 
-        get_fields = _fields_extractor(header, input_fields)
+        get_fields = _fields_extractor_by_names(header, input_fields)
 
         # data
         for row in stream:
@@ -114,13 +121,55 @@ def delete_fields(*fields_to_delete):
         output_header = tuple(
             field for field in header if field not in fields_to_delete)
 
-        get_fields = _fields_extractor(header, output_header)
+        get_fields = _fields_extractor_by_names(header, output_header)
 
         yield get_fields(header)
         for row in stream:
             yield get_fields(row)
 
     return delete_fields
+
+
+def rename(new_to_old_dict=None, **new_to_old_kw):
+    new_to_old = new_to_old_dict or new_to_old_kw
+
+    def _get_label_index_map(header):
+        old_header = {label: i for i, label in enumerate(header)}
+        new_header = {}
+        for (new, old) in new_to_old.iteritems():
+            assert old in header, old
+            index = header.index(old)
+            if old in old_header:
+                del old_header[old]
+            new_header[new] = index
+
+        # overwrite old_headers with new
+        old_header.update(new_header)
+        return old_header.items()
+
+    def _get_sorted_label_index_map(header):
+        label_index_map = _get_label_index_map(header)
+
+        def sort_key(label_index):
+            label, index = label_index
+            return (index, label not in header, label)
+
+        return sorted(label_index_map, key=sort_key)
+
+    @stream_filter
+    def rename(stream):
+        header = stream.next()
+        out_order = _get_sorted_label_index_map(header)
+
+        yield tuple(label for (label, __) in out_order)
+
+        output_indices = [index for (__, index) in out_order]
+        get_fields = _fields_extractor_for(output_indices)
+
+        for row in stream:
+            yield get_fields(row)
+
+    return rename
 
 
 def pipe(*filters):

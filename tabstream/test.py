@@ -243,6 +243,75 @@ class Test_delete_fields(unittest.TestCase):
                 ])))
 
 
+class Test_rename(unittest.TestCase):
+
+    # output column order remains the same
+    # duplicated columns are put next to each other
+    # duplicated column labels are ordered:
+    #   first: original label (if still there)
+    #   others: alphabetically
+
+    def test_in_place(self):
+        transform = m.rename(a1='a', b1='b')
+        self.assertListEqual(
+            [
+                ('a1', 'b1', 'c', 'd'),
+                (1, 2, 3, 4)
+            ],
+            list(transform([
+                ('a', 'b', 'c', 'd'),
+                (1, 2, 3, 4)
+                ])))
+
+    def test_overwrite_existing_column(self):
+        transform = m.rename(b='a')
+        self.assertListEqual(
+            [
+                ('b', 'c', 'd'),
+                (1, 3, 4)
+            ],
+            list(transform([
+                ('a', 'b', 'c', 'd'),
+                (1, 2, 3, 4)
+                ])))
+
+    def test_swap_labels(self):
+        transform = m.rename(b='a', a='b')
+        self.assertListEqual(
+            [
+                ('b', 'a', 'c', 'd'),
+                (1, 2, 3, 4)
+            ],
+            list(transform([
+                ('a', 'b', 'c', 'd'),
+                (1, 2, 3, 4)
+                ])))
+
+    def test_rename_with_special_characters(self):
+        transform = m.rename({'new @!': 'old !'})
+        self.assertListEqual(
+            [
+                ('a', 'b', 'new @!', 'd'),
+                (1, 2, 3, 4)
+            ],
+            list(transform([
+                ('a', 'b', 'old !', 'd'),
+                (1, 2, 3, 4)
+                ])))
+
+    def test_duplicate_under_another_name(self):
+        transform = m.rename(d='a', a='a')
+        self.assertListEqual(
+            [
+                ('a', 'd', 'b'),
+                (1, 1, 2)
+            ],
+            list(transform([
+                ('a', 'b'),
+                (1, 2)
+                ])))
+
+
 class Test_pipe(unittest.TestCase):
 
     def test_order_of_transformations(self):
