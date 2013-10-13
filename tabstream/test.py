@@ -67,7 +67,8 @@ class Test_select(unittest.TestCase):
                     columns.split(u','))))
 
     def test_select_one_column(self):
-        input_csv = u'''a,b,c
+        input_csv = u'''\
+            a,b,c
             a,1,c
             a,2,d
             x,3,x'''
@@ -79,7 +80,8 @@ class Test_select(unittest.TestCase):
                     [u'b'])))
 
     def test_select_no_columns_is_error(self):
-        input_csv = u'''a,b
+        input_csv = u'''\
+                a,b
                 a,1
                 a,2
                 x,3'''
@@ -89,10 +91,12 @@ class Test_select(unittest.TestCase):
 
     def test_select_columns_in_reverse_order(self):
         self.assert_selects(
-            result_csv=u'''1,a
+            result_csv=u'''\
+                1,a
                 2,a
                 3,x''',
-            input_csv=u'''a,b,c
+            input_csv=u'''\
+                a,b,c
                 a,1,c
                 a,2,d
                 x,3,x''',
@@ -100,10 +104,12 @@ class Test_select(unittest.TestCase):
 
     def test_select_a_column_multiple_times(self):
         self.assert_selects(
-            result_csv=u'''1,1
+            result_csv=u'''\
+                1,1
                 2,2
                 3,3''',
-            input_csv='''a,b,c
+            input_csv='''\
+                a,b,c
                 a,1,c
                 a,2,d
                 x,3,x''',
